@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="system-ui,-apple-system,sans-serif" font-size="13">
+  <defs>
+    <linearGradient id="dkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2496ed"/>
+      <stop offset="100%" style="stop-color:#66b2ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="460" rx="12" fill="#0f172a"/>
+  <text x="480" y="28" text-anchor="middle" fill="#94a3b8" font-size="11">MCP CONTAINERS — NATIVE DOCKER MANAGEMENT (42 TOOLS)</text>
+
+  <!-- Clients -->
+  <rect x="20" y="130" width="130" height="150" rx="8" fill="#1e293b" stroke="#475569"/>
+  <text x="85" y="150" text-anchor="middle" fill="#94a3b8" font-size="10">MCP CLIENTS</text>
+  <rect x="30" y="165" width="110" height="20" rx="3" fill="#334155"/>
+  <text x="85" y="179" text-anchor="middle" fill="#f1f5f9" font-size="9">Claude / Kiro</text>
+  <rect x="30" y="190" width="110" height="20" rx="3" fill="#334155"/>
+  <text x="85" y="204" text-anchor="middle" fill="#f1f5f9" font-size="9">Cursor / Codex</text>
+  <rect x="30" y="215" width="110" height="20" rx="3" fill="#334155"/>
+  <text x="85" y="229" text-anchor="middle" fill="#f1f5f9" font-size="9">Windsurf</text>
+
+  <line x1="150" y1="205" x2="195" y2="205" stroke="#6366f1" stroke-width="2"/>
+  <polygon points="195,200 205,205 195,210" fill="#6366f1"/>
+  <text x="172" y="195" text-anchor="middle" fill="#6366f1" font-size="9">stdio</text>
+
+  <!-- Server -->
+  <rect x="205" y="45" width="370" height="380" rx="8" fill="url(#dkGrad)" opacity="0.08" stroke="#2496ed" stroke-width="1.5"/>
+  <text x="390" y="67" text-anchor="middle" fill="#2496ed" font-size="14" font-weight="bold">mcp-containers</text>
+  <text x="390" y="83" text-anchor="middle" fill="#64748b" font-size="9">Rust · rmcp 1.7 · bollard · 42 tools · Zero config</text>
+
+  <rect x="217" y="95" width="170" height="65" rx="4" fill="#1e293b"/>
+  <text x="302" y="111" text-anchor="middle" fill="#2496ed" font-size="9">CONTAINERS (17)</text>
+  <text x="302" y="126" text-anchor="middle" fill="#64748b" font-size="8">run · stop · kill · restart</text>
+  <text x="302" y="138" text-anchor="middle" fill="#64748b" font-size="8">pause · exec · logs · stats</text>
+  <text x="302" y="150" text-anchor="middle" fill="#64748b" font-size="8">top · changes · update · wait</text>
+
+  <rect x="393" y="95" width="170" height="65" rx="4" fill="#1e293b"/>
+  <text x="478" y="111" text-anchor="middle" fill="#34d399" font-size="9">IMAGES (8)</text>
+  <text x="478" y="126" text-anchor="middle" fill="#64748b" font-size="8">list · pull · remove · inspect</text>
+  <text x="478" y="138" text-anchor="middle" fill="#64748b" font-size="8">tag · history · save · load</text>
+
+  <rect x="217" y="168" width="170" height="50" rx="4" fill="#1e293b"/>
+  <text x="302" y="184" text-anchor="middle" fill="#fbbf24" font-size="9">NETWORKS (5)</text>
+  <text x="302" y="199" text-anchor="middle" fill="#64748b" font-size="8">list · create · remove · inspect</text>
+  <text x="302" y="211" text-anchor="middle" fill="#64748b" font-size="8">connect · disconnect</text>
+
+  <rect x="393" y="168" width="170" height="50" rx="4" fill="#1e293b"/>
+  <text x="478" y="184" text-anchor="middle" fill="#a78bfa" font-size="9">VOLUMES (4)</text>
+  <text x="478" y="199" text-anchor="middle" fill="#64748b" font-size="8">list · create · remove · inspect</text>
+
+  <rect x="217" y="226" width="170" height="45" rx="4" fill="#1e293b"/>
+  <text x="302" y="242" text-anchor="middle" fill="#fb923c" font-size="9">COMPOSE (2)</text>
+  <text x="302" y="257" text-anchor="middle" fill="#64748b" font-size="8">up · down</text>
+
+  <rect x="393" y="226" width="170" height="45" rx="4" fill="#1e293b"/>
+  <text x="478" y="242" text-anchor="middle" fill="#f87171" font-size="9">FILES + SYSTEM (6)</text>
+  <text x="478" y="257" text-anchor="middle" fill="#64748b" font-size="8">copy · export · info · prune</text>
+
+  <!-- Connection to Docker -->
+  <rect x="217" y="280" width="346" height="30" rx="4" fill="#1e293b" stroke="#2496ed" stroke-width="0.5"/>
+  <text x="390" y="299" text-anchor="middle" fill="#2496ed" font-size="9">bollard crate → Unix socket → Docker daemon</text>
+
+  <!-- Docker -->
+  <rect x="620" y="80" width="300" height="320" rx="8" fill="#1e293b" stroke="#2496ed"/>
+  <text x="770" y="108" text-anchor="middle" fill="#2496ed" font-size="13" font-weight="bold">🐳 Docker Engine</text>
+
+  <rect x="640" y="125" width="260" height="30" rx="4" fill="#334155"/>
+  <text x="770" y="144" text-anchor="middle" fill="#f1f5f9" font-size="9">Containers (run, stop, exec, logs...)</text>
+  <rect x="640" y="163" width="260" height="30" rx="4" fill="#334155"/>
+  <text x="770" y="182" text-anchor="middle" fill="#f1f5f9" font-size="9">Images (pull, build, tag, push...)</text>
+  <rect x="640" y="201" width="260" height="30" rx="4" fill="#334155"/>
+  <text x="770" y="220" text-anchor="middle" fill="#f1f5f9" font-size="9">Networks (bridge, overlay, host...)</text>
+  <rect x="640" y="239" width="260" height="30" rx="4" fill="#334155"/>
+  <text x="770" y="258" text-anchor="middle" fill="#f1f5f9" font-size="9">Volumes (local, NFS, cloud...)</text>
+
+  <rect x="640" y="285" width="260" height="55" rx="4" fill="#0f172a" stroke="#475569"/>
+  <text x="770" y="305" text-anchor="middle" fill="#94a3b8" font-size="9">CONNECTION</text>
+  <text x="770" y="320" text-anchor="middle" fill="#64748b" font-size="8">macOS: ~/.docker/run/docker.sock</text>
+  <text x="770" y="333" text-anchor="middle" fill="#64748b" font-size="8">Linux: /var/run/docker.sock</text>
+
+  <rect x="640" y="350" width="260" height="30" rx="4" fill="#0f172a" stroke="#34d399"/>
+  <text x="770" y="369" text-anchor="middle" fill="#34d399" font-size="9">✅ Zero config — auto-connects</text>
+
+  <text x="480" y="445" text-anchor="middle" fill="#475569" font-size="10">mcp-containers v2.2.0 · 42 tools · Native Docker socket · bollard crate · Tested live</text>
+</svg>

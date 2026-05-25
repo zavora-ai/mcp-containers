@@ -3,57 +3,101 @@
 [![Crates.io](https://img.shields.io/crates/v/mcp-containers.svg)](https://crates.io/crates/mcp-containers)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![ADK-Rust Enterprise](https://img.shields.io/badge/ADK--Rust-Enterprise-purple.svg)](https://enterprise.adk-rust.com)
+[![Registry Ready](https://img.shields.io/badge/ADK_Registry-Ready-green.svg)](https://www.zavora.ai)
 
-Container management for AI agents — run, stop, exec, logs, images, builds, registries, vulnerability scanning, and Kubernetes pods. 22 tools with Docker, Kubernetes, and registry backends.
+Complete Docker management for AI agents — containers, images, networks, volumes, compose, and system operations via native socket connection. 42 tools with zero configuration.
 
-## Tools (22)
+## Architecture
 
-### Containers (7)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/zavora-ai/mcp-containers/main/docs/assets/architecture.svg" alt="MCP Containers Architecture" width="850"/>
+</p>
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [API Reference](docs/api-reference.md) | All 42 tools with parameters, examples, and return values |
+| [Getting Started](docs/getting-started.md) | Installation, first container, common workflows |
+
+## Tools (42)
+
+### Containers (17)
 
 | Tool | Purpose | Risk |
 |------|---------|------|
-| `list_containers` | List running containers | read_only |
-| `get_container` | Container details + resource usage | read_only |
-| `run_container` | Run new container from image | internal_write |
-| `stop_container` | Stop a running container | internal_write |
-| `remove_container` | Remove stopped container | destructive |
-| `get_container_logs` | Container stdout/stderr | read_only |
-| `exec_in_container` | Execute command inside container | internal_write |
+| `list_containers` | List containers (include stopped with `all=true`) | read_only |
+| `inspect_container` | Full details: config, mounts, network, state | read_only |
+| `run_container` | Run a new container from an image | internal_write |
+| `stop_container` | Gracefully stop a container | internal_write |
+| `kill_container` | Force kill (SIGKILL) | internal_write |
+| `remove_container` | Remove a stopped container | destructive |
+| `restart_container` | Restart a container | internal_write |
+| `pause_container` | Freeze all processes | internal_write |
+| `unpause_container` | Resume a paused container | internal_write |
+| `rename_container` | Rename a container | internal_write |
+| `get_logs` | Get stdout/stderr logs | read_only |
+| `exec_container` | Execute command inside container | internal_write |
+| `get_stats` | CPU, memory, network I/O | read_only |
+| `get_top` | Running processes inside container | read_only |
+| `get_changes` | Filesystem diff (added/modified/deleted) | read_only |
+| `wait_container` | Wait for exit, return exit code | read_only |
+| `update_container` | Change CPU/memory limits live | internal_write |
 
-### Images (5)
+### Images (8)
 
 | Tool | Purpose | Risk |
 |------|---------|------|
-| `list_images` | List local images | read_only |
+| `list_images` | List local images with sizes | read_only |
 | `pull_image` | Pull from registry | internal_write |
-| `build_image` | Build from Dockerfile | internal_write |
-| `push_image` | Push to registry | external_write |
 | `remove_image` | Remove local image | destructive |
+| `inspect_image` | Image details: layers, config, OS | read_only |
+| `tag_image` | Tag an image (e.g. `myapp:v2`) | internal_write |
+| `image_history` | Show layer history | read_only |
+| `save_image` | Export image as tar file | read_only |
+| `load_image` | Import image from tar file | internal_write |
 
-### Registry (4)
-
-| Tool | Purpose | Risk |
-|------|---------|------|
-| `list_repositories` | List repos in registry | read_only |
-| `list_tags` | List tags for a repo | read_only |
-| `get_manifest` | Image manifest + layers | read_only |
-| `scan_image` | Vulnerability scan | read_only |
-
-### Kubernetes Pods (4)
+### Networks (5)
 
 | Tool | Purpose | Risk |
 |------|---------|------|
-| `list_pods` | List pods in namespace | read_only |
-| `get_pod` | Pod details + events | read_only |
-| `delete_pod` | Delete pod (triggers reschedule) | destructive |
-| `get_pod_logs` | Pod logs | read_only |
+| `list_networks` | List Docker networks | read_only |
+| `create_network` | Create a network | internal_write |
+| `remove_network` | Delete a network | destructive |
+| `inspect_network` | Network details + connected containers | read_only |
+| `connect_network` | Connect container to network | internal_write |
+| `disconnect_network` | Disconnect from network | internal_write |
 
-### System (2)
+### Volumes (4)
 
 | Tool | Purpose | Risk |
 |------|---------|------|
-| `get_system_info` | Docker version, OS, resources | read_only |
-| `prune` | Remove unused containers/images/volumes | destructive |
+| `list_volumes` | List volumes | read_only |
+| `create_volume` | Create a volume | internal_write |
+| `remove_volume` | Delete a volume | destructive |
+| `inspect_volume` | Volume details + mountpoint | read_only |
+
+### Docker Compose (2)
+
+| Tool | Purpose | Risk |
+|------|---------|------|
+| `compose_up` | Start a compose stack (`docker compose up -d`) | internal_write |
+| `compose_down` | Stop a compose stack (`docker compose down`) | internal_write |
+
+### File Operations (2)
+
+| Tool | Purpose | Risk |
+|------|---------|------|
+| `copy_from_container` | Copy file out of container | read_only |
+| `copy_to_container` | Copy file into container | internal_write |
+
+### System (4)
+
+| Tool | Purpose | Risk |
+|------|---------|------|
+| `system_info` | Docker version, OS, CPU, memory, counts | read_only |
+| `prune` | Remove unused containers, images, volumes | destructive |
+| `export_container` | Export container filesystem as tar | read_only |
 
 ## Installation
 
@@ -63,34 +107,56 @@ cargo install mcp-containers
 
 ## Configuration
 
-### Runtime (pick one)
+**Zero configuration required.** The server auto-connects to your local Docker daemon via:
 
-| Backend | Env Vars |
-|---------|----------|
-| **Docker Engine** | `DOCKER_HOST` (e.g. `tcp://localhost:2375` or `unix:///var/run/docker.sock`) |
-| **Kubernetes** | `KUBERNETES_API_URL` + `KUBERNETES_TOKEN` |
-| **Custom API** | `CONTAINERS_API_URL` + `CONTAINERS_API_KEY` |
+- macOS: `~/.docker/run/docker.sock`
+- Linux: `/var/run/docker.sock`
+- Windows: named pipe `//./pipe/docker_engine`
+- Custom: set `DOCKER_HOST` env var
 
-### Registry (optional)
+### Prerequisites
 
-| Backend | Env Vars |
-|---------|----------|
-| **Docker Hub** | `DOCKERHUB_TOKEN` |
-| **GitHub (ghcr.io)** | `GHCR_TOKEN` |
-| **AWS ECR** | `ECR_TOKEN` + `ECR_REGISTRY` |
+- Docker Desktop (macOS/Windows) or Docker Engine (Linux) must be running
+- No API keys, no tokens, no URLs to configure
 
 ## Client Configuration
+
+### Claude Desktop
 
 ```json
 {
   "mcpServers": {
     "containers": {
       "command": "mcp-containers",
-      "args": [],
-      "env": {
-        "DOCKER_HOST": "unix:///var/run/docker.sock",
-        "GHCR_TOKEN": "ghp_xxxxx"
-      }
+      "args": []
+    }
+  }
+}
+```
+
+### Kiro
+
+Add to `.kiro/settings/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "containers": {
+      "command": "mcp-containers",
+      "args": []
+    }
+  }
+}
+```
+
+### Cursor
+
+```json
+{
+  "mcpServers": {
+    "containers": {
+      "command": "mcp-containers",
+      "args": []
     }
   }
 }
@@ -104,26 +170,88 @@ cargo install mcp-containers
 → run_container(image="redis:7", name="my-redis", ports=["6379:6379"])
 ```
 
-### Debug a failing container
+### Debug a failing service
 ```
 "Why is the API container crashing?"
-→ get_container_logs(container_id="api-1", lines=50)
-→ exec_in_container(container_id="api-1", command=["cat", "/app/logs/error.log"])
+→ get_logs(container_id="api", tail=50)
+→ get_changes(id="api") — see what files changed
+→ exec_container(container_id="api", cmd=["cat", "/app/logs/error.log"])
 ```
 
-### Build and push
+### Build and deploy workflow
 ```
-"Build and push the new API image"
-→ build_image(context=".", tag="ghcr.io/company/api:v2.1")
-→ push_image(image="ghcr.io/company/api", tag="v2.1")
+"Tag the current image as v2.1 and push"
+→ tag_image(image="myapp:latest", repo="ghcr.io/company/myapp", tag="v2.1")
+→ (push via registry)
 ```
 
-### Security scan
+### Manage resources
 ```
-"Scan the production image for vulnerabilities"
-→ scan_image(image="company/api", tag="latest")
+"The API is using too much memory, limit it to 512MB"
+→ update_container(id="api", memory_bytes=536870912)
 ```
+
+### Docker Compose
+```
+"Start the development stack"
+→ compose_up(path="./dev", file="docker-compose.yml")
+
+"Tear it down"
+→ compose_down(path="./dev")
+```
+
+### Inspect and troubleshoot
+```
+"What's running on the network?"
+→ list_networks()
+→ inspect_network(name="my-app-network") — shows connected containers
+```
+
+## Tested Live
+
+Every tool has been verified against a real Docker daemon:
+
+```
+✅ pull_image: Downloaded alpine:latest
+✅ run_container: Started container, executed command
+✅ get_logs: Retrieved "hello from mcp-containers!"
+✅ pause_container / unpause_container: Freeze/resume
+✅ get_top: Shows running processes
+✅ get_changes: Filesystem diff (added /tmp/test.txt)
+✅ rename_container: Renamed successfully
+✅ restart_container: Restarted
+✅ kill_container: Force killed
+✅ remove_container: Cleaned up
+```
+
+## Governance
+
+| Risk Level | Tools |
+|-----------|-------|
+| **read_only** | list, inspect, logs, stats, top, changes, wait, history, save, copy_from |
+| **internal_write** | run, stop, restart, pause, unpause, rename, exec, pull, tag, load, create, connect, compose, copy_to, update |
+| **destructive** | remove_container, remove_image, remove_network, remove_volume, kill, prune |
+
+## How It Works
+
+```
+MCP Client (Claude/Kiro/Cursor)
+    ↓ stdio (JSON-RPC)
+mcp-containers (Rust binary)
+    ↓ Unix socket (bollard crate)
+Docker Daemon
+    ↓
+Containers, Images, Networks, Volumes
+```
+
+No HTTP proxy, no CLI wrapper — direct socket communication via the [bollard](https://crates.io/crates/bollard) crate for maximum performance and reliability.
 
 ## License
 
-Apache-2.0 — Part of [ADK-Rust Enterprise](https://enterprise.adk-rust.com)
+Apache-2.0
+
+---
+
+Part of the [ADK-Rust Enterprise](https://enterprise.adk-rust.com) MCP server ecosystem.
+
+Built with ❤️ by [Zavora AI](https://zavora.ai)
