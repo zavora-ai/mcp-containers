@@ -25,9 +25,21 @@ pub struct ImageInput { pub image: String, pub tag: Option<String> }
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct FilterInput { pub all: Option<bool> }
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct NameInput { pub name: String }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct NetworkInput { pub name: String, pub driver: Option<String> }
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct VolumeInput { pub name: String }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct RenameInput { pub id: String, pub new_name: String }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct TagInput { pub image: String, pub repo: String, pub tag: String }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct ConnectInput { pub network: String, pub container_id: String }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct ComposeInput { pub path: Option<String>, pub file: Option<String> }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct CopyInput { pub container_id: String, pub container_path: String, pub local_path: String }
 
 #[derive(Clone)]
 pub struct ContainerServer {
@@ -304,5 +316,180 @@ impl ContainerServer {
             "volumes_removed": v.as_ref().and_then(|r| r.volumes_deleted.as_ref()).map(|v| v.len()),
             "space_reclaimed_mb": i.as_ref().map(|r| r.space_reclaimed.unwrap_or(0) / 1024 / 1024).unwrap_or(0),
         })).unwrap()
+    }
+
+    // === Additional Container Operations ===
+
+    #[tool(description = "Restart a running container")]
+    async fn restart_container(&self, Parameters(input): Parameters<IdInput>) -> String {
+        match self.docker.restart_container(&input.id, None).await {
+            Ok(_) => format!("Container {} restarted", input.id),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Pause a running container (freeze all processes)")]
+    async fn pause_container(&self, Parameters(input): Parameters<IdInput>) -> String {
+        match self.docker.pause_container(&input.id).await {
+            Ok(_) => format!("Container {} paused", input.id),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Unpause a paused container")]
+    async fn unpause_container(&self, Parameters(input): Parameters<IdInput>) -> String {
+        match self.docker.unpause_container(&input.id).await {
+            Ok(_) => format!("Container {} unpaused", input.id),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Rename a container")]
+    async fn rename_container(&self, Parameters(input): Parameters<RenameInput>) -> String {
+        match self.docker.rename_container(&input.id, RenameContainerOptions { name: &input.new_name }).await {
+            Ok(_) => format!("Container {} renamed to {}", input.id, input.new_name),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Show running processes inside a container")]
+    async fn get_top(&self, Parameters(input): Parameters<IdInput>) -> String {
+        match self.docker.top_processes(&input.id, None::<TopOptions<String>>).await {
+            Ok(top) => serde_json::to_string_pretty(&json!({
+                "titles": top.titles, "processes": top.processes
+            })).unwrap(),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Wait for a container to exit and return the exit code")]
+    async fn wait_container(&self, Parameters(input): Parameters<IdInput>) -> String {
+        let mut stream = self.docker.wait_container::<String>(&input.id, None);
+        if let Some(Ok(result)) = stream.next().await {
+            format!("Container {} exited with code {}", input.id, result.status_code)
+        } else {
+            format!("Error waiting for container {}", input.id)
+        }
+    }
+
+    // === Additional Image Operations ===
+
+    #[tool(description = "Tag an image (e.g. myapp:latest → myapp:v2.0)")]
+    async fn tag_image(&self, Parameters(input): Parameters<TagInput>) -> String {
+        let opts = TagImageOptions { repo: input.repo.as_str(), tag: input.tag.as_str() };
+        match self.docker.tag_image(&input.image, Some(opts)).await {
+            Ok(_) => format!("Tagged {} as {}:{}", input.image, input.repo, input.tag),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Show image layer history")]
+    async fn image_history(&self, Parameters(input): Parameters<ImageInput>) -> String {
+        let full = format!("{}:{}", input.image, input.tag.as_deref().unwrap_or("latest"));
+        match self.docker.image_history(&full).await {
+            Ok(history) => {
+                let layers: Vec<serde_json::Value> = history.iter().map(|h| json!({
+                    "created_by": h.created_by, "size_mb": h.size / 1024 / 1024,
+                })).collect();
+                serde_json::to_string_pretty(&layers).unwrap()
+            }
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    // === Additional Network Operations ===
+
+    #[tool(description = "Remove a Docker network")]
+    async fn remove_network(&self, Parameters(input): Parameters<NameInput>) -> String {
+        match self.docker.remove_network(&input.name).await {
+            Ok(_) => format!("Network {} removed", input.name),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Connect a container to a network")]
+    async fn connect_network(&self, Parameters(input): Parameters<ConnectInput>) -> String {
+        let config = ConnectNetworkOptions { container: &input.container_id, endpoint_config: EndpointSettings::default() };
+        match self.docker.connect_network(&input.network, config).await {
+            Ok(_) => format!("Container {} connected to network {}", input.container_id, input.network),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Disconnect a container from a network")]
+    async fn disconnect_network(&self, Parameters(input): Parameters<ConnectInput>) -> String {
+        let config = DisconnectNetworkOptions { container: &input.container_id, force: true };
+        match self.docker.disconnect_network(&input.network, config).await {
+            Ok(_) => format!("Container {} disconnected from network {}", input.container_id, input.network),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    // === Additional Volume Operations ===
+
+    #[tool(description = "Remove a Docker volume")]
+    async fn remove_volume(&self, Parameters(input): Parameters<VolumeInput>) -> String {
+        match self.docker.remove_volume(&input.name, None).await {
+            Ok(_) => format!("Volume {} removed", input.name),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    // === Docker Compose ===
+
+    #[tool(description = "Start a docker-compose stack (docker compose up -d)")]
+    async fn compose_up(&self, Parameters(input): Parameters<ComposeInput>) -> String {
+        let dir = input.path.as_deref().unwrap_or(".");
+        let file = input.file.as_deref().unwrap_or("docker-compose.yml");
+        let output = tokio::process::Command::new("docker")
+            .args(["compose", "-f", file, "up", "-d"])
+            .current_dir(dir)
+            .output().await;
+        match output {
+            Ok(o) if o.status.success() => format!("Compose stack started in {}", dir),
+            Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Stop a docker-compose stack (docker compose down)")]
+    async fn compose_down(&self, Parameters(input): Parameters<ComposeInput>) -> String {
+        let dir = input.path.as_deref().unwrap_or(".");
+        let file = input.file.as_deref().unwrap_or("docker-compose.yml");
+        let output = tokio::process::Command::new("docker")
+            .args(["compose", "-f", file, "down"])
+            .current_dir(dir)
+            .output().await;
+        match output {
+            Ok(o) if o.status.success() => format!("Compose stack stopped in {}", dir),
+            Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    // === File Copy ===
+
+    #[tool(description = "Copy a file from a container to local path")]
+    async fn copy_from_container(&self, Parameters(input): Parameters<CopyInput>) -> String {
+        let output = tokio::process::Command::new("docker")
+            .args(["cp", &format!("{}:{}", input.container_id, input.container_path), &input.local_path])
+            .output().await;
+        match output {
+            Ok(o) if o.status.success() => format!("Copied {}:{} → {}", input.container_id, input.container_path, input.local_path),
+            Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Copy a file from local path into a container")]
+    async fn copy_to_container(&self, Parameters(input): Parameters<CopyInput>) -> String {
+        let output = tokio::process::Command::new("docker")
+            .args(["cp", &input.local_path, &format!("{}:{}", input.container_id, input.container_path)])
+            .output().await;
+        match output {
+            Ok(o) if o.status.success() => format!("Copied {} → {}:{}", input.local_path, input.container_id, input.container_path),
+            Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) => format!("Error: {}", e),
+        }
     }
 }
