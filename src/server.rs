@@ -40,6 +40,12 @@ pub struct ConnectInput { pub network: String, pub container_id: String }
 pub struct ComposeInput { pub path: Option<String>, pub file: Option<String> }
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct CopyInput { pub container_id: String, pub container_path: String, pub local_path: String }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct UpdateContainerInput { pub id: String, pub memory_bytes: Option<i64>, pub cpus: Option<f64> }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct ExportInput { pub id: String, pub output: Option<String> }
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct LoadInput { pub path: String }
 
 #[derive(Clone)]
 pub struct ContainerServer {
@@ -488,6 +494,103 @@ impl ContainerServer {
             .output().await;
         match output {
             Ok(o) if o.status.success() => format!("Copied {} → {}:{}", input.local_path, input.container_id, input.container_path),
+            Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    // === Additional Operations ===
+
+    #[tool(description = "Kill a container (send SIGKILL or custom signal)")]
+    async fn kill_container(&self, Parameters(input): Parameters<IdInput>) -> String {
+        match self.docker.kill_container::<String>(&input.id, None).await {
+            Ok(_) => format!("Container {} killed", input.id),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Get filesystem changes in a container (added/modified/deleted files)")]
+    async fn get_changes(&self, Parameters(input): Parameters<IdInput>) -> String {
+        match self.docker.container_changes(&input.id).await {
+            Ok(Some(changes)) => {
+                let items: Vec<serde_json::Value> = changes.iter().map(|c| json!({
+                    "path": c.path, "kind": c.kind
+                })).collect();
+                serde_json::to_string_pretty(&items).unwrap()
+            }
+            Ok(None) => "No changes".into(),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Update container resource limits (CPU, memory)")]
+    async fn update_container(&self, Parameters(input): Parameters<UpdateContainerInput>) -> String {
+        let config = UpdateContainerOptions::<String> {
+            memory: input.memory_bytes,
+            nano_cpus: input.cpus.map(|c| (c * 1e9) as i64),
+            ..Default::default()
+        };
+        match self.docker.update_container(&input.id, config).await {
+            Ok(_) => format!("Container {} resources updated", input.id),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Export container filesystem as tar (returns file path)")]
+    async fn export_container(&self, Parameters(input): Parameters<ExportInput>) -> String {
+        let output_path = input.output.unwrap_or(format!("{}.tar", input.id));
+        let output = tokio::process::Command::new("docker")
+            .args(["export", "-o", &output_path, &input.id])
+            .output().await;
+        match output {
+            Ok(o) if o.status.success() => format!("Exported container {} → {}", input.id, output_path),
+            Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Inspect a Docker network (details, connected containers)")]
+    async fn inspect_network(&self, Parameters(input): Parameters<NameInput>) -> String {
+        match self.docker.inspect_network::<String>(&input.name, None).await {
+            Ok(net) => serde_json::to_string_pretty(&json!({
+                "name": net.name, "id": net.id, "driver": net.driver, "scope": net.scope,
+                "containers": net.containers.as_ref().map(|c| c.keys().collect::<Vec<_>>()),
+            })).unwrap(),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Inspect a Docker volume")]
+    async fn inspect_volume(&self, Parameters(input): Parameters<VolumeInput>) -> String {
+        match self.docker.inspect_volume(&input.name).await {
+            Ok(vol) => serde_json::to_string_pretty(&json!({
+                "name": vol.name, "driver": vol.driver, "mountpoint": vol.mountpoint,
+                "created_at": vol.created_at, "labels": vol.labels,
+            })).unwrap(),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Save an image as a tar file")]
+    async fn save_image(&self, Parameters(input): Parameters<ExportInput>) -> String {
+        let output_path = input.output.unwrap_or(format!("{}.tar", input.id.replace('/', "_").replace(':', "_")));
+        let output = tokio::process::Command::new("docker")
+            .args(["save", "-o", &output_path, &input.id])
+            .output().await;
+        match output {
+            Ok(o) if o.status.success() => format!("Saved image {} → {}", input.id, output_path),
+            Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(description = "Load an image from a tar file")]
+    async fn load_image(&self, Parameters(input): Parameters<LoadInput>) -> String {
+        let output = tokio::process::Command::new("docker")
+            .args(["load", "-i", &input.path])
+            .output().await;
+        match output {
+            Ok(o) if o.status.success() => format!("Loaded image from {}: {}", input.path, String::from_utf8_lossy(&o.stdout).trim()),
             Ok(o) => format!("Error: {}", String::from_utf8_lossy(&o.stderr)),
             Err(e) => format!("Error: {}", e),
         }
