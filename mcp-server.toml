@@ -1,6 +1,6 @@
 server_id = "mcp_containers"
 display_name = "Containers"
-version = "2.2.0"
+version = "2.3.0"
 domain = "containers"
 sdk_version = "0.2.0"
 risk_level = "high"
