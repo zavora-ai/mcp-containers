@@ -1,0 +1,305 @@
+server_id = "mcp_containers"
+display_name = "Containers"
+version = "2.3.0"
+domain = "containers"
+sdk_version = "0.2.0"
+risk_level = "high"
+writes_allowed = "gated"
+transports = ["stdio"]
+credentials = []
+governance_gates = ["mrtr_approval"]
+environments = ["development", "staging", "production"]
+
+[[tools]]
+name = "list_containers"
+description = "List containers (set all=true to include stopped)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "inspect_container"
+description = "Get container details: status, config, mounts, network"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "run_container"
+description = "Run a new container from an image"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "stop_container"
+description = "Stop a running container"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "remove_container"
+description = "Remove a container (must be stopped first)"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "get_logs"
+description = "Get container logs (last N lines)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "exec_container"
+description = "Execute a command inside a running container"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "get_stats"
+description = "Get container resource usage (CPU, memory, network I/O)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "list_images"
+description = "List local Docker images"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "pull_image"
+description = "Pull an image from a registry"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "remove_image"
+description = "Remove a local image"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "inspect_image"
+description = "Inspect an image: layers, size, config, history"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "list_networks"
+description = "List Docker networks"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "create_network"
+description = "Create a Docker network"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "list_volumes"
+description = "List Docker volumes"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "create_volume"
+description = "Create a Docker volume"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "system_info"
+description = "Get Docker system info: version, OS, containers, images count"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "prune"
+description = "Prune stopped containers, unused images, and dangling volumes"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "restart_container"
+description = "Restart a running container"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "pause_container"
+description = "Pause a running container (freeze all processes)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "unpause_container"
+description = "Unpause a paused container"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "rename_container"
+description = "Rename a container"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "get_top"
+description = "Show running processes inside a container"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "wait_container"
+description = "Wait for a container to exit and return the exit code"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "tag_image"
+description = "Tag an image (e.g. myapp:latest → myapp:v2.0)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "image_history"
+description = "Show image layer history"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "remove_network"
+description = "Remove a Docker network"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "connect_network"
+description = "Connect a container to a network"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "disconnect_network"
+description = "Disconnect a container from a network"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "remove_volume"
+description = "Remove a Docker volume"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "compose_up"
+description = "Start a docker-compose stack (docker compose up -d)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "compose_down"
+description = "Stop a docker-compose stack (docker compose down)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "copy_from_container"
+description = "Copy a file from a container to local path"
+risk_class = "file_code_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "copy_to_container"
+description = "Copy a file from local path into a container"
+risk_class = "file_code_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "kill_container"
+description = "Kill a container (send SIGKILL or custom signal)"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "get_changes"
+description = "Get filesystem changes in a container (added/modified/deleted files)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "update_container"
+description = "Update container resource limits (CPU, memory)"
+risk_class = "internal_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "export_container"
+description = "Export container filesystem as tar (returns file path)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "inspect_network"
+description = "Inspect a Docker network (details, connected containers)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "inspect_volume"
+description = "Inspect a Docker volume"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "save_image"
+description = "Save an image as a tar file"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "load_image"
+description = "Load an image from a tar file"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
