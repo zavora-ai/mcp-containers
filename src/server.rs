@@ -52,7 +52,7 @@ pub struct ContainerServer {
     pub docker: Docker,
 }
 
-#[tool_router(server_handler)]
+#[tool_router]
 impl ContainerServer {
     // === Containers (8) ===
 
@@ -595,4 +595,11 @@ impl ContainerServer {
             Err(e) => format!("Error: {}", e),
         }
     }
+}
+
+adk_mcp_sdk::mcp_2026_server! {
+    server: ContainerServer,
+    task_tools: ["run_container", "export_container"],
+    approval_tools: ["stop_container", "remove_container", "remove_image", "create_network", "create_volume", "restart_container", "remove_network", "remove_volume", "copy_from_container", "copy_to_container", "kill_container", "update_container"],
+    cache_ttl_ms: 60_000,
 }
